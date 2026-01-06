@@ -89,7 +89,7 @@ func runGame(gameInstance *game.Game) {
 			break
 		}
 
-		if gameInstance.Tour == 1 {
+		if gameInstance.GetTour() == 1 {
 			fmt.Printf("\nFin du tour de %s\n", gameInstance.PlayersList[0].Name)
 			fmt.Printf("Début du tour de %s\n", gameInstance.PlayersList[1].Name)
 			gameInstance.ChangeTour(2)
