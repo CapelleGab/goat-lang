@@ -1,12 +1,6 @@
-package models
+package player
 
-type Player struct {
-	ID     int
-	Name   string
-	Email  string
-	Stats  PlayerStats
-	Skills []Skill
-}
+import "github.com/google/uuid"
 
 type PlayerStats struct {
 	Mana         int
@@ -24,4 +18,11 @@ type Skill struct {
 	Damage   int
 	Healing  int
 	Type     string
+}
+
+type Player struct {
+	ID          uuid.UUID
+	Name        string
+	Stats       PlayerStats
+	Skills      []Skill
 }

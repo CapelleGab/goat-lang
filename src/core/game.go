@@ -2,76 +2,77 @@ package core
 
 import (
 	"fmt"
-	"goat-lang/src/models"
+
+	game "goat-lang/src/models/Game"
+	player "goat-lang/src/models/Player"
+
+	"github.com/google/uuid"
 )
 
-func getPlayers() []models.Player {
-	return []models.Player{
-		{
-			ID:    1,
-			Name:  "John Doe",
-			Email: "john@example.com",
-			Stats: models.PlayerStats{
-				Mana:         50,
-				MaxMana:      100,
-				Health:       100,
-				MaxHealth:    100,
-				Damage:       15,
-				Defense:      5,
-				Intelligence: 8,
-			},
-			Skills: []models.Skill{
-				{Name: "Boule de feu", ManaCost: 15, Damage: 20, Healing: 0, Type: "offensive"},
-				{Name: "Éclair", ManaCost: 20, Damage: 30, Healing: 0, Type: "offensive"},
-				{Name: "Soin mineur", ManaCost: 10, Damage: 0, Healing: 25, Type: "healing"},
-			},
-		},
-		{
-			ID:    2,
-			Name:  "Jane Smith",
-			Email: "jane@example.com",
-			Stats: models.PlayerStats{
-				Mana:         50,
-				MaxMana:      100,
-				Health:       100,
-				MaxHealth:    100,
-				Damage:       15,
-				Defense:      5,
-				Intelligence: 8,
-			},
-			Skills: []models.Skill{
-				{Name: "Lame de glace", ManaCost: 15, Damage: 22, Healing: 0, Type: "offensive"},
-				{Name: "Tempête", ManaCost: 25, Damage: 35, Healing: 0, Type: "offensive"},
-				{Name: "Régénération", ManaCost: 12, Damage: 0, Healing: 30, Type: "healing"},
-			},
-		},
-	}
-}
-
 func PrepareGame() {
-	game := models.Game{
-		Name:      "Goat Lang",
-		Developer: "CapelleGab",
-		Players:   getPlayers(),
-		Version:   "1.0.0",
-		Tour:      1,
-	}
+	p1 := player.NewPlayer(
+		uuid.New(),
+		"John Doe",
+		player.PlayerStats{
+			Mana:         50,
+			MaxMana:      50,
+			Health:       100,
+			MaxHealth:    100,
+			Damage:       15,
+			Defense:      5,
+			Intelligence: 100,
+		},
+		[]player.Skill{
+			{
+				Name:     "Eclair",
+				ManaCost: 20,
+				Damage:   10,
+				Healing:  0,
+				Type:     "Electric",
+			},
+		},
+	)
+	p2 := player.NewPlayer(
+		uuid.New(),
+		"Jane Doe",
+		player.PlayerStats{
+			Mana:         50,
+			MaxMana:      50,
+			Health:       100,
+			MaxHealth:    100,
+			Damage:       15,
+			Defense:      5,
+			Intelligence: 100,
+		},
+		[]player.Skill{
+			{
+				Name:     "Eclair",
+				ManaCost: 20,
+				Damage:   10,
+				Healing:  0,
+				Type:     "Electric",
+			},
+		},
+	)
+	gameInstance := game.NewGame("Goat Lang", "CapelleGab", []player.Player{*p1, *p2}, 1, "1.0.0")
+	gameInstance.ChangeGameState(game.PrepareGame)
 
-	fmt.Printf("Launching game %s...\n", game.Name)
-	for _, player := range game.Players {
-		fmt.Printf("Player %d: %s \n", player.ID, player.Name)
+	fmt.Printf("Launching game %s...\n", gameInstance.Name)
+	for _, player := range gameInstance.PlayersList {
+		fmt.Printf("Player %s : %s \n", player.ID.String(), player.Name)
 	}
 
 	fmt.Println("Game is ready to start!")
-	runGame(game)
+	runGame(gameInstance)
 }
 
-func runGame(game models.Game) {
+func runGame(gameInstance *game.Game) {
 	fmt.Println("Game is running!")
+	// Change game state to running
 
 	for {
-		player1 := &game.Players[0]
-		player2 := &game.Players[1]
+		player1 := &gameInstance.GetPlayers()[0]
+		player2 := &gameInstance.GetPlayers()[1]
 
 		if player1.Stats.Health <= 0 {
 			fmt.Printf("\n%s a été vaincu! %s gagne!\n", player1.Name, player2.Name)
@@ -82,44 +83,28 @@ func runGame(game models.Game) {
 			break
 		}
 
-		currentPlayer := whoPlayed(game.Tour, &game)
-		if !startRound(&game) {
+		currentPlayer := gameInstance.WhoPlayed()
+		if !startRound(gameInstance) {
 			fmt.Printf("\n%s a fui le combat!\n", currentPlayer.Name)
 			break
 		}
 
-		if game.Tour == 1 {
-			fmt.Printf("\nFin du tour de %s\n", game.Players[0].Name)
-			fmt.Printf("Début du tour de %s\n", game.Players[1].Name)
-			game.Tour = 2
+		if gameInstance.Tour == 1 {
+			fmt.Printf("\nFin du tour de %s\n", gameInstance.PlayersList[0].Name)
+			fmt.Printf("Début du tour de %s\n", gameInstance.PlayersList[1].Name)
+			gameInstance.ChangeTour(2)
 		} else {
-			fmt.Printf("\nFin du tour de %s\n", game.Players[1].Name)
-			fmt.Printf("Début du tour de %s\n", game.Players[0].Name)
-			game.Tour = 1
+			fmt.Printf("\nFin du tour de %s\n", gameInstance.PlayersList[1].Name)
+			fmt.Printf("Début du tour de %s\n", gameInstance.PlayersList[0].Name)
+			gameInstance.ChangeTour(1)
 		}
 	}
 }
 
-func whoPlayed(tour int, game *models.Game) *models.Player {
-	if tour == 1 {
-		return &game.Players[0]
-	} else {
-		return &game.Players[1]
-	}
-}
-
-func whoEnemy(tour int, game *models.Game) *models.Player {
-	if tour == 1 {
-		return &game.Players[1]
-	} else {
-		return &game.Players[0]
-	}
-}
-
-func startRound(game *models.Game) bool {
+func startRound(gameInstance *game.Game) bool {
 	fmt.Println("\n--- Nouveau tour ---")
-	attacker := whoPlayed(game.Tour, game)
-	enemy := whoEnemy(game.Tour, game)
+	attacker := gameInstance.WhoPlayed()
+	enemy := gameInstance.WhoEnemy()
 
 	fmt.Printf("Attaquant: %s (HP: %d/%d, Mana: %d/%d)\n",
 		attacker.Name, attacker.Stats.Health, attacker.Stats.MaxHealth,
@@ -137,11 +122,11 @@ func startRound(game *models.Game) bool {
 
 	switch choice {
 	case 1:
-		attack(attacker, enemy)
+		player.Attack(attacker, enemy)
 	case 2:
-		useSkill(attacker, enemy)
+		player.UseSkill(attacker, enemy)
 	case 3:
-		return flee(attacker)
+		return player.Flee(attacker)
 	default:
 		fmt.Println("Choix invalide")
 	}

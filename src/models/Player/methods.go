@@ -1,11 +1,21 @@
-package core
+package player
 
 import (
 	"fmt"
-	"goat-lang/src/models"
+
+	"github.com/google/uuid"
 )
 
-func attack(attacker *models.Player, defender *models.Player) {
+func NewPlayer(ID uuid.UUID, name string, stats PlayerStats, skills []Skill) *Player {
+	return &Player{
+		ID:     ID,
+		Name:   name,
+		Stats:  stats,
+		Skills: skills,
+	}
+}
+
+func Attack(attacker *Player, defender *Player) {
 	if attacker.Stats.Mana <= 0 {
 		fmt.Println("Tu n'as plus de mana pour attaquer!")
 		return
@@ -23,7 +33,7 @@ func attack(attacker *models.Player, defender *models.Player) {
 	fmt.Printf("%s a maintenant %d HP\n", defender.Name, defender.Stats.Health)
 }
 
-func useSkill(attacker *models.Player, enemy *models.Player) {
+func UseSkill(attacker *Player, enemy *Player) {
 	if len(attacker.Skills) == 0 {
 		fmt.Println("Tu n'as aucune compétence disponible!")
 		return
@@ -79,9 +89,7 @@ func useSkill(attacker *models.Player, enemy *models.Player) {
 	}
 }
 
-func flee(attacker *models.Player) bool {
+func Flee(attacker *Player) bool {
 	fmt.Printf("%s tente de fuir le combat...\n", attacker.Name)
 	return false
 }
-
-
